@@ -1,0 +1,23 @@
+{
+  "name": "sass-lint-server",
+  "description": "Sass Lint linter server",
+  "version": "0.0.1",
+  "author": "glen-84",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "chokidar": "^1.6.0",
+    "globule": "^1.0.0",
+    "vscode-languageserver": "^2.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.9"
+  },
+  "scripts": {
+    "compile": "installServerIntoExtension ../sass-lint ./package.json ./tsconfig.json && tsc -p .",
+    "watch": "installServerIntoExtension ../sass-lint ./package.json ./tsconfig.json && tsc --watch -p ."
+  }
+}
