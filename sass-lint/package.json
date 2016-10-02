@@ -4,7 +4,7 @@
   "description": "Sass Lint for Visual Studio Code",
   "author": "glen-84",
   "publisher": "glen-84",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "icon": "sass-lint.png",
   "repository": {
@@ -48,7 +48,10 @@
         },
         "sasslint.run": {
           "type": "string",
-          "enum": ["onSave", "onType"],
+          "enum": [
+            "onSave",
+            "onType"
+          ],
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
         }
