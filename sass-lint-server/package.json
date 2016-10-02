@@ -11,10 +11,10 @@
   "dependencies": {
     "chokidar": "^1.6.0",
     "globule": "^1.0.0",
-    "vscode-languageserver": "^2.2.1"
+    "vscode-languageserver": "^2.5.1"
   },
   "devDependencies": {
-    "typescript": "^1.8.9"
+    "typescript": "^1.8.10"
   },
   "scripts": {
     "compile": "installServerIntoExtension ../sass-lint ./package.json ./tsconfig.json && tsc -p .",
