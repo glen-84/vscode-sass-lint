@@ -1,5 +1,9 @@
 # vscode-sass-lint
 
+![Version](https://vsmarketplacebadge.apphb.com/version-short/glen-84.sass-lint.svg)
+![Installs](https://vsmarketplacebadge.apphb.com/installs-short/glen-84.sass-lint.svg)
+![Rating](https://vsmarketplacebadge.apphb.com/rating-short/glen-84.sass-lint.svg)
+
 Integrates the [sass-lint](https://github.com/sasstools/sass-lint) linter into VS Code.
 
 Please refer to the sass-lint [documentation](https://github.com/sasstools/sass-lint) for how to configure the linting
