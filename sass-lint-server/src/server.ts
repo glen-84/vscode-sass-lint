@@ -33,6 +33,7 @@ interface Settings {
         enable: boolean;
         configFile: string;
         resolvePathsRelativeToConfig: boolean;
+        run: "onSave" | "onType";
     };
 }
 
@@ -85,8 +86,16 @@ connection.onInitialize((params): Thenable<InitializeResult | ResponseError<Init
 
 // The content of a text document has changed.
 // This event is emitted when the text document is first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-    validateTextDocument(change.document);
+documents.onDidChangeContent((event) => {
+    if (settings.sasslint.run === "onType") {
+        validateTextDocument(event.document);
+    }
+});
+
+documents.onDidSave((event) => {
+    if (settings.sasslint.run === "onSave") {
+        validateTextDocument(event.document);
+    }
 });
 
 // A text document was closed. Clear the diagnostics.

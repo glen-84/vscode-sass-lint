@@ -45,6 +45,12 @@
           "type": "boolean",
           "description": "This option allows you to choose to resolve file paths relative to your config file rather than relative to the root of your currently open project",
           "default": false
+        },
+        "sasslint.run": {
+          "type": "string",
+          "enum": ["onSave", "onType"],
+          "default": "onType",
+          "description": "Run the linter on save (onSave) or on type (onType)"
         }
       }
     }
