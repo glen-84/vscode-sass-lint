@@ -190,7 +190,7 @@ function locateFile(directory: string, fileName: string): string {
         const location = path.join(directory, fileName);
 
         try {
-            fs.accessSync(location, fs.R_OK);
+            fs.accessSync(location, fs.constants.R_OK);
 
             return location;
         } catch (e) {
@@ -282,7 +282,7 @@ connection.onDidChangeConfiguration((params) => {
 
         try {
             // Check if the file can be read.
-            fs.accessSync(newConfigFile, fs.R_OK);
+            fs.accessSync(newConfigFile, fs.constants.R_OK);
         } catch (e) {
             connection.window.showErrorMessage(
                 `The file ${newConfigFile} referred to by 'sasslint.configFile' could not be read`

@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
-        "target": "ES5",
+        "target": "es6",
+        "lib": [
+            "es6"
+        ],
         "module": "commonjs",
-        "moduleResolution": "node",
         "sourceMap": true,
         "outDir": "../sass-lint/server"
     },
-    "exclude": [
-        ".vscode",
-        "node_modules"
+    "include": [
+        "src/server.ts",
+        "typings.d.ts"
     ]
 }

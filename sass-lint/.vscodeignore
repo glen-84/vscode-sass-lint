@@ -3,4 +3,3 @@
 **/*.map
 src/**
 tsconfig.json
-typings/**

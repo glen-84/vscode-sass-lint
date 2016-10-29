@@ -4,7 +4,6 @@ VS Code extension to support [sass-lint](https://github.com/sasstools/sass-lint)
 
 ## Development setup
 * run `npm install` inside the `sass-lint` and `sass-lint-server` folders
-* run `typings install` inside the `sass-lint` and `sass-lint-server` folders
 * open VS Code on `sass-lint` and `sass-lint-server`
 
 ## Developing the server

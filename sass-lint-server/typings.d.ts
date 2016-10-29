@@ -1,4 +1,3 @@
-declare module "globule" {
-    const globule: any;
-    export = globule;
-}
+declare interface Thenable<T> extends PromiseLike<T> {}
+
+declare module "globule";

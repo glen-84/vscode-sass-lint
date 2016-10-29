@@ -1,9 +1,0 @@
-{
-    "globalDependencies": {
-        "core": "file:node_modules/vscode/typings/core.d.ts",
-        "es6": "file:node_modules/vscode/typings/es6.d.ts",
-        "global": "file:node_modules/vscode/typings/global.d.ts",
-        "intl": "file:node_modules/vscode/typings/intl.d.ts",
-        "node": "file:node_modules/vscode/typings/node.d.ts"
-    }
-}
