@@ -22,7 +22,6 @@
   ],
   "activationEvents": [
     "onLanguage:sass",
-    "onLanguage:sass-indented",
     "onLanguage:scss"
   ],
   "main": "./out/extension",
