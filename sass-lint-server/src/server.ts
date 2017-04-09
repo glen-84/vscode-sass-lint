@@ -50,15 +50,6 @@ let workspaceRoot: string;
 connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>> => {
     workspaceRoot = params.rootPath!; // TODO: Find out how to handle this null (and switch to rootUri)
 
-    // Watch ".sass-lint.yml" files.
-    const watcher = chokidar.watch(`**/${CONFIG_FILE_NAME}`, {ignoreInitial: true, persistent: false});
-    watcher.on("all", () => {
-        // Clear cache.
-        configPathCache = {};
-
-        validateAllTextDocuments(documents.all());
-    });
-
     return Files.resolveModule(workspaceRoot, "sass-lint").then(
         (value): InitializeResult | ResponseError<InitializeError> => {
             sassLint = value;
@@ -317,6 +308,13 @@ connection.onDidChangeConfiguration((params) => {
     }
 
     // Revalidate any open text documents.
+    validateAllTextDocuments(documents.all());
+});
+
+connection.onDidChangeWatchedFiles(() => {
+    // Clear cache.
+    configPathCache = {};
+
     validateAllTextDocuments(documents.all());
 });
 

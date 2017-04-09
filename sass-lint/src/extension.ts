@@ -1,4 +1,4 @@
-import {ExtensionContext} from "vscode";
+import {ExtensionContext, workspace} from "vscode";
 import {
     LanguageClient,
     LanguageClientOptions,
@@ -36,7 +36,8 @@ export function activate(context: ExtensionContext) {
         documentSelector: ["sass", "scss"],
         synchronize: {
             // Synchronize the setting section "sasslint" to the server.
-            configurationSection: "sasslint"
+            configurationSection: "sasslint",
+            fileEvents: workspace.createFileSystemWatcher("**/.sass-lint.yml")
         }
     };
 
