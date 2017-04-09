@@ -6,7 +6,11 @@
         ],
         "module": "commonjs",
         "sourceMap": true,
-        "outDir": "out"
+        "outDir": "out",
+        "newLine": "LF",
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "strictNullChecks": true
     },
     "include": [
         "src/extension.ts"

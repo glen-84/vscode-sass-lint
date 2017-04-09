@@ -39,20 +39,20 @@ interface Settings {
 
 let sassLint;
 let settings: Settings;
-let configPathCache: {[key: string]: string} = {};
+let configPathCache: {[key: string]: string | null} = {};
 let settingsConfigFile;
-let settingsConfigFileWatcher: fs.FSWatcher = null;
+let settingsConfigFileWatcher: fs.FSWatcher | null = null;
 const CONFIG_FILE_NAME = ".sass-lint.yml";
 
 // After the server has started the client sends an initialize request.
 // The server receives in the passed params the rootPath of the workspace plus the client capabilities.
 let workspaceRoot: string;
 connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>> => {
-    workspaceRoot = params.rootPath;
+    workspaceRoot = params.rootPath!; // TODO: Find out how to handle this null (and switch to rootUri)
 
     // Watch ".sass-lint.yml" files.
     const watcher = chokidar.watch(`**/${CONFIG_FILE_NAME}`, {ignoreInitial: true, persistent: false});
-    watcher.on("all", (event, filePath) => {
+    watcher.on("all", () => {
         // Clear cache.
         configPathCache = {};
 
@@ -71,7 +71,7 @@ connection.onInitialize((params): Thenable<InitializeResult | ResponseError<Init
 
             return result;
         },
-        (error) => {
+        () => {
             return Promise.reject(
                 new ResponseError<InitializeError>(
                     99,
@@ -153,7 +153,7 @@ function validateAllTextDocuments(textDocuments: TextDocument[]): void {
     tracker.sendErrors(connection);
 }
 
-function getConfigFile(filePath: string): string {
+function getConfigFile(filePath: string): string | null {
     const dirName = path.dirname(filePath);
 
     let configFile = configPathCache[dirName];
@@ -181,7 +181,7 @@ function getConfigFile(filePath: string): string {
     return null;
 }
 
-function locateFile(directory: string, fileName: string): string {
+function locateFile(directory: string, fileName: string): string | null {
     let parent = directory;
 
     do {
@@ -274,7 +274,7 @@ function getErrorMessage(err, document: TextDocument): string {
 connection.onDidChangeConfiguration((params) => {
     settings = params.settings;
 
-    let newConfigFile = null;
+    let newConfigFile: string | null = null;
 
     // Watch configFile specified in VS Code settings.
     if (settings.sasslint && settings.sasslint.configFile) {
@@ -305,7 +305,7 @@ connection.onDidChangeConfiguration((params) => {
         // Start watching the new config file.
         if (newConfigFile) {
             settingsConfigFileWatcher = chokidar.watch(newConfigFile, {ignoreInitial: true, persistent: false});
-            settingsConfigFileWatcher.on("all", (event, filePath) => {
+            settingsConfigFileWatcher.on("all", () => {
                 // Clear cache.
                 configPathCache = {};
 
