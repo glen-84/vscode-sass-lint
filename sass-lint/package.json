@@ -4,7 +4,7 @@
   "description": "Sass Lint for Visual Studio Code",
   "author": "glen-84",
   "publisher": "glen-84",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "MIT",
   "icon": "sass-lint.png",
   "repository": {
