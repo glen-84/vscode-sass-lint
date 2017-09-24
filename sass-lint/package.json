@@ -33,17 +33,20 @@
         "sasslint.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Enable or disable linting"
+          "description": "Enable or disable linting",
+          "scope": "resource"
         },
         "sasslint.configFile": {
           "type": "string",
           "description": "A .sass-lint.yml file to use/fallback to if no config file is found in the current project",
-          "default": ""
+          "default": "",
+          "scope": "resource"
         },
         "sasslint.resolvePathsRelativeToConfig": {
           "type": "boolean",
           "description": "This option allows you to choose to resolve file paths relative to your config file rather than relative to the root of your currently open project",
-          "default": false
+          "default": false,
+          "scope": "resource"
         },
         "sasslint.run": {
           "type": "string",
@@ -52,7 +55,8 @@
             "onType"
           ],
           "default": "onType",
-          "description": "Run the linter on save (onSave) or on type (onType)"
+          "description": "Run the linter on save (onSave) or on type (onType)",
+          "scope": "resource"
         }
       }
     }
