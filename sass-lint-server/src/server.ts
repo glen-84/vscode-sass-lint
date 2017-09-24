@@ -48,13 +48,14 @@ const CONFIG_FILE_NAME = ".sass-lint.yml";
 // The server receives in the passed params the rootPath of the workspace plus the client capabilities.
 let workspaceRoot: string;
 connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>> => {
+    // tslint:disable-next-line:no-non-null-assertion
     workspaceRoot = params.rootPath!; // TODO: Find out how to handle this null (and switch to rootUri)
 
     return Files.resolveModule(workspaceRoot, "sass-lint").then(
         (value): InitializeResult | ResponseError<InitializeError> => {
             sassLint = value;
 
-            let result: InitializeResult = {
+            const result: InitializeResult = {
                 capabilities: {
                     textDocumentSync: documents.syncKind
                 }
@@ -95,7 +96,7 @@ documents.onDidClose((event) => {
 });
 
 function validateTextDocument(textDocument: TextDocument): void {
-    let filePath = Files.uriToFilePath(textDocument.uri);
+    const filePath = Files.uriToFilePath(textDocument.uri);
     if (!filePath) {
         // Sass Lint can only lint files on disk.
         return;
@@ -238,12 +239,12 @@ function makeDiagnostic(msg): Diagnostic {
     }
 
     return {
-        severity: severity,
+        severity,
         range: {
-            start: {line: line, character: column},
-            end:   {line: line, character: column + 1}
+            start: {line, character: column},
+            end:   {line, character: column + 1}
         },
-        message: message,
+        message,
         source: "sass-lint"
     };
 }
