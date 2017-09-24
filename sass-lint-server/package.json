@@ -9,14 +9,14 @@
     "node": "*"
   },
   "dependencies": {
-    "chokidar": "^1.6.1",
-    "globule": "^1.1.0",
-    "vscode-languageserver": "^3.2.0"
+    "chokidar": "^1.7.0",
+    "globule": "^1.2.0",
+    "vscode-languageserver": "^3.4.3"
   },
   "devDependencies": {
-    "@types/chokidar": "^1.6.0",
-    "@types/node": "^7.0.12",
-    "typescript": "^2.2.2"
+    "@types/chokidar": "^1.7.3",
+    "@types/node": "^8.0.30",
+    "typescript": "^2.5.2"
   },
   "scripts": {
     "compile": "installServerIntoExtension ../sass-lint ./package.json ./tsconfig.json && tsc -p .",
