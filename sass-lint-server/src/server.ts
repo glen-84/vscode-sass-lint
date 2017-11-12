@@ -233,9 +233,9 @@ function makeDiagnostic(msg): Diagnostic {
 
     let message;
     if (msg.message) {
-        message = msg.message;
+        message = `${msg.message} (${msg.ruleId})`;
     } else {
-        message = "Unknown error";
+        message = "Unknown error.";
     }
 
     return {
