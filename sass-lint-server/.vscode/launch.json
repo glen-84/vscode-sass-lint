@@ -6,7 +6,9 @@
             "name": "Attach",
             "type": "node",
             "request": "attach",
-            "port": 6004,
+            "address": "localhost",
+            "protocol": "inspector",
+            "port": 6010,
             "sourceMaps": true,
             "outFiles": ["${workspaceRoot}/../sass-lint/server/**/*.js"]
         }

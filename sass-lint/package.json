@@ -15,10 +15,13 @@
     "url": "https://github.com/glen-84/vscode-sass-lint/issues"
   },
   "engines": {
-    "vscode": "^1.6.0"
+    "vscode": "^1.18.0"
   },
   "categories": [
     "Linters"
+  ],
+  "keywords": [
+    "multi-root ready"
   ],
   "activationEvents": [
     "onLanguage:sass",
@@ -57,6 +60,33 @@
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)",
           "scope": "resource"
+        },
+        "sasslint.packageManager": {
+          "type": "string",
+          "enum": [
+            "npm",
+            "yarn"
+          ],
+          "default": "npm",
+          "description": "The package manager to use to install global node modules.",
+          "scope": "resource"
+        },
+        "sasslint.nodePath": {
+          "type": "string",
+          "default": "",
+          "description": "A path added to NODE_PATH when resolving the sass-lint module.",
+          "scope": "resource"
+        },
+        "sasslint.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VSCode and the sass-lint linter service.",
+          "scope": "window"
         }
       }
     }
@@ -67,11 +97,11 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
-    "@types/node": "^8.0.30",
-    "typescript": "^2.5.2",
-    "vscode": "^1.1.5"
+    "@types/node": "^8.0.51",
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.6"
   },
   "dependencies": {
-    "vscode-languageclient": "^3.4.5"
+    "vscode-languageclient": "^3.5.0"
   }
 }

@@ -1,25 +1,29 @@
+import {ConfigurationRequest} from "vscode-languageserver-protocol/lib/protocol.configuration.proposed";
+import {
+    WorkspaceFolder, WorkspaceFoldersInitializeParams
+} from "vscode-languageserver-protocol/lib/protocol.workspaceFolders.proposed";
 import {
     createConnection,
     Diagnostic,
     DiagnosticSeverity,
     ErrorMessageTracker,
     Files,
-    IConnection,
-    InitializeError,
-    InitializeResult,
-    IPCMessageReader,
-    IPCMessageWriter,
-    ResponseError,
+    Proposed,
+    ProposedFeatures,
+    RequestType,
     TextDocument,
-    TextDocuments
+    TextDocumentIdentifier,
+    TextDocuments,
+    InitializeParams
 } from "vscode-languageserver";
-import * as chokidar from "chokidar";
 import * as fs from "fs";
 import * as globule from "globule";
 import * as path from "path";
+import * as sassLint from "sass-lint";
+import Uri from "vscode-uri";
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
-const connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
+const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager. The text document manager supports full document sync only.
 const documents: TextDocuments = new TextDocuments();
@@ -29,106 +33,273 @@ documents.listen(connection);
 
 // Settings as defined in VS Code.
 interface Settings {
-    sasslint: {
-        enable: boolean;
-        configFile: string;
-        resolvePathsRelativeToConfig: boolean;
-        run: "onSave" | "onType";
-    };
+    enable: boolean;
+    configFile: string;
+    resolvePathsRelativeToConfig: boolean;
+    run: "onSave" | "onType";
+    packageManager: "npm" | "yarn";
+    nodePath: string | undefined;
+    trace: "off" | "messages" | "verbose";
 }
 
-let sassLint;
-let settings: Settings;
+class SettingsCache {
+    private uri: string | undefined;
+    private promise: Promise<Settings> | undefined;
+
+    public constructor() {
+        this.uri = undefined;
+        this.promise = undefined;
+    }
+
+    public async get(uri: string): Promise<Settings> {
+        if (uri === this.uri) {
+            trace(`SettingsCache: cache hit for: ${this.uri}`);
+
+            // tslint:disable-next-line:no-non-null-assertion
+            return this.promise!;
+        }
+
+        if (hasConfigurationCapability) {
+            this.uri = uri;
+
+            return this.promise = new Promise<Settings>(async (resolve, _reject) => {
+                trace(`SettingsCache: cache updating for: ${this.uri}`);
+
+                const configRequestParam = {items: [{scopeUri: uri, section: "sasslint"}]};
+                const settings = await connection.sendRequest(ConfigurationRequest.type, configRequestParam);
+
+                resolveGlobalPackageManagerPath(settings[0].packageManager);
+
+                resolve(settings[0]);
+            });
+        }
+
+        this.promise = Promise.resolve(globalSettings);
+
+        return this.promise;
+    }
+
+    public flush() {
+        this.uri = undefined;
+        this.promise = undefined;
+    }
+}
+
+let workspaceFolders: WorkspaceFolder[];
+let hasConfigurationCapability = false;
+let hasWorkspaceFolderCapability = false;
+let globalSettings: Settings;
+const settingsCache = new SettingsCache();
+// Map stores undefined values to represent failed resolutions.
+const globalPackageManagerPath: Map<string, string> = new Map();
+const path2Library: Map<string, typeof sassLint> = new Map();
+const document2Library: Map<string, Thenable<typeof sassLint>> = new Map();
 let configPathCache: {[key: string]: string | null} = {};
-let settingsConfigFile;
-let settingsConfigFileWatcher: fs.FSWatcher | null = null;
 const CONFIG_FILE_NAME = ".sass-lint.yml";
 
-// After the server has started the client sends an initialize request.
-// The server receives in the passed params the rootPath of the workspace plus the client capabilities.
-let workspaceRoot: string;
-connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>> => {
-    // tslint:disable-next-line:no-non-null-assertion
-    workspaceRoot = params.rootPath!; // TODO: Find out how to handle this null (and switch to rootUri)
+interface NoSassLintLibraryParams {
+    source: TextDocumentIdentifier;
+}
 
-    return Files.resolveModule(workspaceRoot, "sass-lint").then(
-        (value): InitializeResult | ResponseError<InitializeError> => {
-            sassLint = value;
+// tslint:disable-next-line:no-namespace
+namespace NoSassLintLibraryRequest {
+    export const type = new RequestType<NoSassLintLibraryParams, {}, void, void>("sass-lint/noLibrary");
+}
 
-            const result: InitializeResult = {
-                capabilities: {
-                    textDocumentSync: documents.syncKind
-                }
-            };
+function trace(message: string, verbose?: string): void {
+    connection.tracer.log(message, verbose);
+}
 
-            return result;
-        },
-        () => {
-            return Promise.reject(
-                new ResponseError<InitializeError>(
-                    99,
-                    `Failed to load sass-lint library. Please install sass-lint in your workspace folder using 'npm
-                    install sass-lint' or globally using 'npm install sass-lint -g' and then press Retry.`,
-                    {retry: true}
-                )
-            );
+connection.onInitialize((params: InitializeParams & WorkspaceFoldersInitializeParams) => {
+    trace("onInitialize");
+
+    if (params.workspaceFolders) {
+        workspaceFolders = params.workspaceFolders;
+
+        // Sort folders.
+        sortWorkspaceFolders();
+    }
+
+    const capabilities = params.capabilities;
+
+    hasWorkspaceFolderCapability =
+        (capabilities as Proposed.WorkspaceFoldersClientCapabilities).workspace &&
+        !!(capabilities as Proposed.WorkspaceFoldersClientCapabilities).workspace.workspaceFolders;
+
+    hasConfigurationCapability =
+        (capabilities as Proposed.ConfigurationClientCapabilities).workspace &&
+        !!(capabilities as Proposed.ConfigurationClientCapabilities).workspace.configuration;
+
+    return {
+        capabilities: {
+            textDocumentSync: documents.syncKind
         }
-    );
+    };
+});
+
+connection.onInitialized(() => {
+    if (hasWorkspaceFolderCapability) {
+        connection.workspace.onDidChangeWorkspaceFolders((event) => {
+            trace("onDidChangeWorkspaceFolders");
+
+            // Removed folders.
+            for (const workspaceFolder of event.removed) {
+                const index = workspaceFolders.findIndex((folder) => folder.uri === workspaceFolder.uri);
+
+                if (index !== -1) {
+                    workspaceFolders.splice(index, 1);
+                }
+            }
+
+            // Added folders.
+            for (const workspaceFolder of event.added) {
+                workspaceFolders.push(workspaceFolder);
+            }
+
+            // Sort folders.
+            sortWorkspaceFolders();
+        });
+    }
+});
+
+function sortWorkspaceFolders() {
+    workspaceFolders.sort((folder1, folder2) => {
+        let uri1 = folder1.uri.toString();
+        let uri2 = folder2.uri.toString();
+
+        if (!uri1.endsWith("/")) {
+            uri1 += path.sep;
+        }
+
+        if (uri2.endsWith("/")) {
+            uri2 += path.sep;
+        }
+
+        return (uri1.length - uri2.length);
+    });
+}
+
+documents.onDidOpen(async (event) => {
+    trace(`onDidOpen: ${event.document.uri}`);
+
+    validateTextDocument(event.document);
 });
 
 // The content of a text document has changed.
 // This event is emitted when the text document is first opened or when its content has changed.
-documents.onDidChangeContent((event) => {
-    if (settings.sasslint.run === "onType") {
+documents.onDidChangeContent(async (event) => {
+    trace(`onDidChangeContent: ${event.document.uri}`);
+
+    const settings = await settingsCache.get(event.document.uri);
+
+    if (settings && settings.run === "onType") {
+        validateTextDocument(event.document);
+    } else if (settings && settings.run === "onSave") {
+        // Clear the diagnostics when validating on save and when the document is modified.
+        connection.sendDiagnostics({uri: event.document.uri, diagnostics: []});
+    }
+});
+
+documents.onDidSave(async (event) => {
+    trace(`onDidSave: ${event.document.uri}`);
+
+    const settings = await settingsCache.get(event.document.uri);
+
+    if (settings && settings.run === "onSave") {
         validateTextDocument(event.document);
     }
 });
 
-documents.onDidSave((event) => {
-    if (settings.sasslint.run === "onSave") {
-        validateTextDocument(event.document);
-    }
-});
-
-// A text document was closed. Clear the diagnostics.
+// A text document was closed.
 documents.onDidClose((event) => {
+    trace(`onDidClose: ${event.document.uri}`);
+
     connection.sendDiagnostics({uri: event.document.uri, diagnostics: []});
+    document2Library.delete(event.document.uri);
+
+    delete configPathCache[Uri.parse(event.document.uri).fsPath];
 });
 
-function validateTextDocument(textDocument: TextDocument): void {
-    const filePath = Files.uriToFilePath(textDocument.uri);
-    if (!filePath) {
-        // Sass Lint can only lint files on disk.
+async function loadLibrary(docUri: string) {
+    trace(`loadLibrary for: ${docUri}`);
+
+    const uri = Uri.parse(docUri);
+    let promise: Thenable<string>;
+    const settings = await settingsCache.get(docUri);
+
+    const getGlobalPath = () => globalPackageManagerPath.get(settings.packageManager);
+
+    if (uri.scheme === "file") {
+        const file = uri.fsPath;
+        const directory = path.dirname(file);
+
+        if (settings && settings.nodePath) {
+            promise = Files.resolve("sass-lint", settings.nodePath, settings.nodePath, trace).then<string, string>(
+                undefined,
+                () => Files.resolve("sass-lint", getGlobalPath(), directory, trace)
+            );
+        } else {
+            promise = Files.resolve("sass-lint", getGlobalPath(), directory, trace);
+        }
+    } else {
+        // tslint:disable-next-line:no-non-null-assertion -- "cwd" argument can be undefined.
+        promise = Files.resolve("sass-lint", getGlobalPath(), undefined!, trace);
+    }
+
+    document2Library.set(docUri, promise.then(
+        (path) => {
+            let library;
+            if (!path2Library.has(path)) {
+                library = require(path);
+                trace(`sass-lint library loaded from: ${path}`);
+                path2Library.set(path, library);
+            }
+
+            return path2Library.get(path);
+        },
+        () => {
+            connection.sendRequest(NoSassLintLibraryRequest.type, {source: {uri: docUri}});
+
+            return undefined;
+        }
+    ));
+}
+
+async function validateTextDocument(document: TextDocument): Promise<void> {
+    const docUri = document.uri;
+
+    trace(`validateTextDocument: ${docUri}`);
+
+    // Sass Lint can only lint files on disk.
+    if (Uri.parse(docUri).scheme !== "file") {
         return;
     }
 
-    const diagnostics: Diagnostic[] = [];
+    const settings = await settingsCache.get(docUri);
 
-    const configFile = getConfigFile(filePath);
-
-    const compiledConfig = sassLint.getConfig({}, configFile);
-
-    const relativePath = getFilePath(filePath, configFile);
-
-    if (globule.isMatch(compiledConfig.files.include, relativePath) &&
-        !globule.isMatch(compiledConfig.files.ignore, relativePath)) {
-        const result = sassLint.lintText(
-            {
-                text: textDocument.getText(),
-                format: path.extname(filePath).slice(1),
-                filename: filePath
-            },
-            {},
-            configFile
-        );
-
-        for (const msg of result.messages) {
-            diagnostics.push(makeDiagnostic(msg));
-        }
+    if (settings && !settings.enable) {
+        return;
     }
 
-    // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({uri: textDocument.uri, diagnostics});
+    if (!document2Library.has(document.uri)) {
+        await loadLibrary(document.uri);
+    }
+
+    if (!document2Library.has(document.uri)) {
+        return;
+    }
+
+    const library = await document2Library.get(document.uri);
+
+    if (library) {
+        try {
+            const diagnostics = await doValidate(library, document);
+
+            connection.sendDiagnostics({uri: docUri, diagnostics});
+        } catch (err) {
+            connection.window.showErrorMessage(getErrorMessage(err, document));
+        }
+    }
 }
 
 function validateAllTextDocuments(textDocuments: TextDocument[]): void {
@@ -145,29 +316,99 @@ function validateAllTextDocuments(textDocuments: TextDocument[]): void {
     tracker.sendErrors(connection);
 }
 
-function getConfigFile(filePath: string): string | null {
-    const dirName = path.dirname(filePath);
+async function doValidate(library: typeof sassLint, document: TextDocument): Promise<Diagnostic[]> {
+    trace(`doValidate: ${document.uri}`);
 
-    let configFile = configPathCache[dirName];
+    const diagnostics: Diagnostic[] = [];
+
+    const docUri = document.uri;
+    const uri = Uri.parse(docUri);
+
+    if (Uri.parse(docUri).scheme !== "file") {
+        // Sass Lint can only lint files on disk.
+        trace("No linting: file is not saved on disk");
+
+        return diagnostics;
+    }
+
+    const settings = await settingsCache.get(docUri);
+    if (!settings) {
+        trace("No linting: settings could not be loaded");
+
+        return diagnostics;
+    }
+
+    const configFile = await getConfigFile(docUri);
+
+    trace(`Config file: ${configFile}`);
+
+    const compiledConfig = library.getConfig({}, configFile);
+
+    const filePath = uri.fsPath;
+
+    let relativePath;
+    if (configFile && settings.resolvePathsRelativeToConfig) {
+        relativePath = path.relative(path.dirname(configFile), filePath);
+    } else {
+        relativePath = getWorkspaceRelativePath(filePath);
+    }
+
+    trace(`Absolute path: ${filePath}`);
+    trace(`Relative path: ${relativePath}`);
+
+    if (globule.isMatch(compiledConfig.files.include, relativePath) &&
+        !globule.isMatch(compiledConfig.files.ignore, relativePath)) {
+        const result = library.lintText(
+            {
+                text: document.getText(),
+                format: path.extname(filePath).slice(1),
+                filename: filePath
+            },
+            {},
+            configFile
+        );
+
+        for (const msg of result.messages) {
+            diagnostics.push(makeDiagnostic(msg));
+        }
+    } else {
+        trace(`No linting: file "${relativePath}" is excluded`);
+    }
+
+    return diagnostics;
+}
+
+async function getConfigFile(docUri: string): Promise<string | null> {
+    const filePath = Uri.parse(docUri).fsPath;
+
+    let configFile = configPathCache[filePath];
 
     if (configFile) {
+        trace(`Config path cache hit for: ${filePath}`);
+
         return configFile;
     } else {
+        trace(`Config path cache miss for: ${filePath}`);
+
+        const dirName = path.dirname(filePath);
+
         configFile = locateFile(dirName, CONFIG_FILE_NAME);
 
         if (configFile) {
             // Cache.
-            configPathCache[dirName] = configFile;
+            configPathCache[filePath] = configFile;
 
             return configFile;
         }
     }
 
-    if (settingsConfigFile) {
-        // Cache.
-        configPathCache[dirName] = settingsConfigFile;
+    const settings = await settingsCache.get(docUri);
 
-        return settingsConfigFile;
+    if (settings && settings.configFile) {
+        // Cache.
+        configPathCache[filePath] = settings.configFile;
+
+        return settings.configFile;
     }
 
     return null;
@@ -195,12 +436,20 @@ function locateFile(directory: string, fileName: string): string | null {
     return null;
 };
 
-function getFilePath(absolutePath, configFilePath): string {
-    if (settings.sasslint.resolvePathsRelativeToConfig) {
-        return path.relative(path.dirname(configFilePath), absolutePath);
-    } else {
-        return path.relative(workspaceRoot, absolutePath);
+function getWorkspaceRelativePath(filePath: string): string {
+    for (const workspaceFolder of workspaceFolders) {
+        let folderPath = Uri.parse(workspaceFolder.uri).fsPath;
+
+        if (!folderPath.endsWith("/")) {
+            folderPath += path.sep;
+        }
+
+        if (folderPath && filePath.startsWith(folderPath)) {
+            return path.relative(folderPath, filePath);
+        }
     }
+
+    return filePath;
 }
 
 function makeDiagnostic(msg): Diagnostic {
@@ -262,51 +511,30 @@ function getErrorMessage(err, document: TextDocument): string {
     return message;
 }
 
+async function resolveGlobalPackageManagerPath(packageManager: string) {
+    if (globalPackageManagerPath.has(packageManager)) {
+        return;
+    }
+
+    let path: string | undefined;
+    if (packageManager === "npm") {
+        path = Files.resolveGlobalNodePath(trace);
+    } else if (packageManager === "yarn") {
+        path = Files.resolveGlobalYarnPath(trace);
+    }
+
+    // tslint:disable-next-line:no-non-null-assertion
+    globalPackageManagerPath.set(packageManager, path!);
+}
+
 // The settings have changed. Sent on server activation as well.
 connection.onDidChangeConfiguration((params) => {
-    settings = params.settings;
+    globalSettings = params.settings;
 
-    let newConfigFile: string | null = null;
+    // Clear cache.
+    configPathCache = {};
 
-    // Watch configFile specified in VS Code settings.
-    if (settings.sasslint && settings.sasslint.configFile) {
-        newConfigFile = settings.sasslint.configFile;
-
-        try {
-            // Check if the file can be read.
-            fs.accessSync(newConfigFile, fs.constants.R_OK);
-        } catch (e) {
-            connection.window.showErrorMessage(
-                `The file ${newConfigFile} referred to by 'sasslint.configFile' could not be read`
-            );
-
-            return;
-        }
-    }
-
-    if (settingsConfigFile !== newConfigFile) {
-        // Clear cache.
-        configPathCache = {};
-
-        // Stop watching the old config file.
-        if (settingsConfigFileWatcher) {
-            settingsConfigFileWatcher.close();
-            settingsConfigFileWatcher = null;
-        }
-
-        // Start watching the new config file.
-        if (newConfigFile) {
-            settingsConfigFileWatcher = chokidar.watch(newConfigFile, {ignoreInitial: true, persistent: false});
-            settingsConfigFileWatcher.on("all", () => {
-                // Clear cache.
-                configPathCache = {};
-
-                validateAllTextDocuments(documents.all());
-            });
-        }
-
-        settingsConfigFile = newConfigFile;
-    }
+    settingsCache.flush();
 
     // Revalidate any open text documents.
     validateAllTextDocuments(documents.all());
