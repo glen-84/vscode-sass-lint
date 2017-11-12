@@ -9,13 +9,11 @@
     "node": "*"
   },
   "dependencies": {
-    "chokidar": "^1.7.0",
     "globule": "^1.2.0",
     "vscode-languageserver": "^3.5.0",
     "vscode-uri": "^1.0.1"
   },
   "devDependencies": {
-    "@types/chokidar": "^1.7.3",
     "@types/node": "^8.0.51",
     "sass-lint": "^1.12.1",
     "typescript": "^2.6.1"
