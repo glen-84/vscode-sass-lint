@@ -68,8 +68,6 @@ class SettingsCache {
                 const configRequestParam = {items: [{scopeUri: uri, section: "sasslint"}]};
                 const settings = await connection.sendRequest(ConfigurationRequest.type, configRequestParam);
 
-                resolveGlobalPackageManagerPath(settings[0].packageManager);
-
                 resolve(settings[0]);
             });
         }
@@ -227,7 +225,7 @@ async function loadLibrary(docUri: string) {
     let promise: Thenable<string>;
     const settings = await settingsCache.get(docUri);
 
-    const getGlobalPath = () => globalPackageManagerPath.get(settings.packageManager);
+    const getGlobalPath = () => getGlobalPackageManagerPath(settings.packageManager);
 
     if (uri.scheme === "file") {
         const file = uri.fsPath;
@@ -511,20 +509,24 @@ function getErrorMessage(err, document: TextDocument): string {
     return message;
 }
 
-async function resolveGlobalPackageManagerPath(packageManager: string) {
-    if (globalPackageManagerPath.has(packageManager)) {
-        return;
+function getGlobalPackageManagerPath(packageManager: string): string | undefined {
+    trace(`Begin - resolve global package manager path for: ${packageManager}`);
+
+    if (!globalPackageManagerPath.has(packageManager)) {
+        let path: string | undefined;
+        if (packageManager === "npm") {
+            path = Files.resolveGlobalNodePath(trace);
+        } else if (packageManager === "yarn") {
+            path = Files.resolveGlobalYarnPath(trace);
+        }
+
+        // tslint:disable-next-line:no-non-null-assertion
+        globalPackageManagerPath.set(packageManager, path!);
     }
 
-    let path: string | undefined;
-    if (packageManager === "npm") {
-        path = Files.resolveGlobalNodePath(trace);
-    } else if (packageManager === "yarn") {
-        path = Files.resolveGlobalYarnPath(trace);
-    }
+    trace(`Done - resolve global package manager path for: ${packageManager}`);
 
-    // tslint:disable-next-line:no-non-null-assertion
-    globalPackageManagerPath.set(packageManager, path!);
+    return globalPackageManagerPath.get(packageManager);
 }
 
 // The settings have changed. Sent on server activation as well.
