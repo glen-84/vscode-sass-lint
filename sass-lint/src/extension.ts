@@ -84,7 +84,7 @@ export function activate(context: ExtensionContext) {
                     }
 
                     const result = next(params, token, next);
-                    const settings = result[0];
+                    result[0] = deepClone(result[0]); // The convertToAbsolutePaths function modifies the settings.
                     let scopeUri = "";
 
                     for (const item of params.items) {
@@ -99,7 +99,7 @@ export function activate(context: ExtensionContext) {
                     const workspaceFolder = workspace.getWorkspaceFolder(resource);
 
                     if (workspaceFolder) {
-                        convertToAbsolutePaths(settings, workspaceFolder);
+                        convertToAbsolutePaths(result[0], workspaceFolder);
                     }
 
                     return result;
@@ -186,4 +186,23 @@ export function activate(context: ExtensionContext) {
     }
 
     client.start();
+}
+
+function deepClone<T>(obj: T): T {
+    if (!obj || typeof obj !== "object") {
+        return obj;
+    }
+
+    // tslint:disable-next-line:no-any
+    const result: any = Array.isArray(obj) ? [] : {};
+
+    Object.getOwnPropertyNames(obj).forEach((key: keyof T) => {
+        if (obj[key] && typeof obj[key] === "object") {
+            result[key] = deepClone(obj[key]);
+        } else {
+            result[key] = obj[key];
+        }
+    });
+
+    return result;
 }
