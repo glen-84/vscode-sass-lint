@@ -435,15 +435,17 @@ function locateFile(directory: string, fileName: string): string | null {
 };
 
 function getWorkspaceRelativePath(filePath: string): string {
-    for (const workspaceFolder of workspaceFolders) {
-        let folderPath = Uri.parse(workspaceFolder.uri).fsPath;
+    if (workspaceFolders) {
+        for (const workspaceFolder of workspaceFolders) {
+            let folderPath = Uri.parse(workspaceFolder.uri).fsPath;
 
-        if (!folderPath.endsWith("/")) {
-            folderPath += path.sep;
-        }
+            if (!folderPath.endsWith("/")) {
+                folderPath += path.sep;
+            }
 
-        if (folderPath && filePath.startsWith(folderPath)) {
-            return path.relative(folderPath, filePath);
+            if (folderPath && filePath.startsWith(folderPath)) {
+                return path.relative(folderPath, filePath);
+            }
         }
     }
 
