@@ -20,7 +20,7 @@ The extension requires that sass-lint is installed either locally or globally.
 * `sasslint.resolvePathsRelativeToConfig` - This option allows you to choose to resolve file paths relative to your
 config file rather than relative to the root of your currently open project.
 * `sasslint.run` - Run the linter `onSave` or `onType`, default is `onType`.
-* `sasslint.packageManager` - defines the package manager to be used to resolve the sass-lint module, when it needs to
-be resolved globally. Valid values are `"npm"` or `"yarn"`.
+* `sasslint.packageManager` - Use this package manager to locate the `sass-lint` module. Valid values are `"npm"` or
+`"yarn"`. This setting is only consulted when the module is installed globally.
 * `sasslint.nodePath` - custom path to node modules directory, used to load sass-lint from a different location than the
 default of the current workspace or the global node modules directory.
