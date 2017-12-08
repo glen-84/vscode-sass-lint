@@ -14,9 +14,9 @@
     "vscode-uri": "^1.0.1"
   },
   "devDependencies": {
-    "@types/node": "^8.0.51",
+    "@types/node": "^8.0.57",
     "sass-lint": "^1.12.1",
-    "typescript": "^2.6.1"
+    "typescript": "^2.6.2"
   },
   "scripts": {
     "compile": "installServerIntoExtension ../sass-lint ./package.json ./tsconfig.json && tsc -p .",
