@@ -44,6 +44,7 @@ interface Settings {
     packageManager: "npm" | "yarn";
     nodePath: string | undefined;
     trace: "off" | "messages" | "verbose";
+    workspaceFolderPath: string | undefined;
 }
 
 class SettingsCache {
@@ -338,6 +339,11 @@ async function doValidate(library: typeof sassLint, document: TextDocument): Pro
         trace("No linting: settings could not be loaded");
 
         return diagnostics;
+    }
+
+    if (settings.workspaceFolderPath) {
+        trace(`Changed directory to ${settings.workspaceFolderPath}`);
+        process.chdir(settings.workspaceFolderPath);
     }
 
     const configFile = await getConfigFile(docUri);
