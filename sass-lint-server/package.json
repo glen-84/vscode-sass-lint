@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "globule": "^1.2.0",
-    "vscode-languageserver": "^3.5.0",
-    "vscode-uri": "^1.0.1"
+    "vscode-languageserver": "^4.1.2",
+    "vscode-uri": "^1.0.3"
   },
   "devDependencies": {
-    "@types/node": "^8.0.57",
+    "@types/node": "^10.0.4",
     "sass-lint": "^1.12.1",
-    "typescript": "^2.6.2"
+    "typescript": "^2.8.3"
   },
   "scripts": {
     "compile": "installServerIntoExtension ../sass-lint ./package.json ./tsconfig.json && tsc -p .",

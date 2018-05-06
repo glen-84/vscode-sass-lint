@@ -1,9 +1,9 @@
 import {ExtensionContext, Uri, workspace, WorkspaceFolder} from "vscode";
 import {
     CancellationToken,
+    ConfigurationParams,
     LanguageClient,
     LanguageClientOptions,
-    Proposed,
     RequestType,
     ServerOptions,
     TextDocumentIdentifier,
@@ -73,7 +73,7 @@ export function activate(context: ExtensionContext) {
         middleware: {
             workspace: {
                 configuration: (
-                    params: Proposed.ConfigurationParams,
+                    params: ConfigurationParams,
                     token: CancellationToken,
                     // tslint:disable-next-line:no-any
                     next: (params, token, next) => any[]

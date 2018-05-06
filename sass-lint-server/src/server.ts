@@ -1,6 +1,10 @@
-import {ConfigurationRequest} from "vscode-languageserver-protocol/lib/protocol.configuration.proposed";
 import {
-    WorkspaceFolder, WorkspaceFoldersInitializeParams
+    ConfigurationClientCapabilities,
+    ConfigurationRequest
+} from "vscode-languageserver-protocol/lib/protocol.configuration.proposed";
+import {
+    WorkspaceFoldersClientCapabilities,
+    WorkspaceFoldersInitializeParams
 } from "vscode-languageserver-protocol/lib/protocol.workspaceFolders.proposed";
 import {
     createConnection,
@@ -8,13 +12,13 @@ import {
     DiagnosticSeverity,
     ErrorMessageTracker,
     Files,
-    Proposed,
+    InitializeParams,
     ProposedFeatures,
     RequestType,
     TextDocument,
     TextDocumentIdentifier,
     TextDocuments,
-    InitializeParams
+    WorkspaceFolder
 } from "vscode-languageserver";
 import * as fs from "fs";
 import * as globule from "globule";
@@ -121,12 +125,12 @@ connection.onInitialize((params: InitializeParams & WorkspaceFoldersInitializePa
     const capabilities = params.capabilities;
 
     hasWorkspaceFolderCapability =
-        (capabilities as Proposed.WorkspaceFoldersClientCapabilities).workspace &&
-        !!(capabilities as Proposed.WorkspaceFoldersClientCapabilities).workspace.workspaceFolders;
+        (capabilities as WorkspaceFoldersClientCapabilities).workspace &&
+        !!(capabilities as WorkspaceFoldersClientCapabilities).workspace.workspaceFolders;
 
     hasConfigurationCapability =
-        (capabilities as Proposed.ConfigurationClientCapabilities).workspace &&
-        !!(capabilities as Proposed.ConfigurationClientCapabilities).workspace.configuration;
+        (capabilities as ConfigurationClientCapabilities).workspace &&
+        !!(capabilities as ConfigurationClientCapabilities).workspace.configuration;
 
     return {
         capabilities: {

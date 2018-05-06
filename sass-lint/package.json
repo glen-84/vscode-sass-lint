@@ -98,11 +98,11 @@
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
-    "@types/node": "^8.0.57",
-    "typescript": "^2.6.2",
-    "vscode": "^1.1.10"
+    "@types/node": "^10.0.4",
+    "typescript": "^2.8.3",
+    "vscode": "^1.1.17"
   },
   "dependencies": {
-    "vscode-languageclient": "^3.5.0"
+    "vscode-languageclient": "^4.1.3"
   }
 }
