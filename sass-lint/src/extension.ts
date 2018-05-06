@@ -58,7 +58,10 @@ export function activate(context: ExtensionContext) {
     // Options to control the language client.
     const clientOptions: LanguageClientOptions = {
         // Register the server for Sass documents.
-        documentSelector: ["sass", "scss"],
+        documentSelector: [
+            {language: "sass", scheme: "file"},
+            {language: "scss", scheme: "file"}
+        ],
         synchronize: {
             // Synchronize the setting section "sasslint" to the server.
             configurationSection: "sasslint",
