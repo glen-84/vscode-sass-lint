@@ -13,7 +13,7 @@
         "strictNullChecks": true
     },
     "include": [
-        "src/server.ts",
+        "src/sass-lint-server.ts",
         "typings.d.ts"
     ]
 }
