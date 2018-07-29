@@ -141,7 +141,7 @@ export function activate(context: ExtensionContext) {
     }
 
     // Create the language client and start it.
-    const client = new LanguageClient("Sass Lint", serverOptions, clientOptions);
+    const client = new LanguageClient("sasslint", "Sass Lint", serverOptions, clientOptions);
     client.registerProposedFeatures();
 
     client.onReady().then(() => {
