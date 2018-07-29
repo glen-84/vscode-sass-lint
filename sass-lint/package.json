@@ -4,7 +4,7 @@
   "description": "Sass Lint for Visual Studio Code",
   "author": "glen-84",
   "publisher": "glen-84",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "icon": "sass-lint.png",
   "repository": {
@@ -89,7 +89,14 @@
           "scope": "window"
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "title": "Show output",
+        "category": "SassLint",
+        "command": "sasslint.showOutputChannel"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",

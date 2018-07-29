@@ -1,4 +1,4 @@
-import {ExtensionContext, Uri, workspace, WorkspaceFolder} from "vscode";
+import {ExtensionContext, Uri, workspace, WorkspaceFolder, commands} from "vscode";
 import {
     CancellationToken,
     ConfigurationParams,
@@ -191,6 +191,10 @@ export function activate(context: ExtensionContext) {
             ].join("");
         }
     }
+
+    context.subscriptions.push(
+        commands.registerCommand("sasslint.showOutputChannel", () => { client.outputChannel.show(); })
+    );
 
     client.start();
 }
