@@ -1,7 +1,5 @@
 import {ExtensionContext, Uri, workspace, WorkspaceFolder, commands} from "vscode";
 import {
-    CancellationToken,
-    ConfigurationParams,
     LanguageClient,
     LanguageClientOptions,
     RequestType,
@@ -75,18 +73,12 @@ export function activate(context: ExtensionContext) {
         },
         middleware: {
             workspace: {
-                configuration: (
-                    params: ConfigurationParams,
-                    token: CancellationToken,
-                    // tslint:disable-next-line:no-any
-                    next: (params, token, next) => any[]
-                // tslint:disable-next-line:no-any
-                ): any[] => {
+                configuration: (params, token, next) => {
                     if (!params.items) {
                         return [];
                     }
 
-                    const result = next(params, token, next);
+                    const result = next(params, token);
                     let scopeUri = "";
 
                     for (const item of params.items) {
