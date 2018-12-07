@@ -16,7 +16,6 @@
         "noUnusedParameters": true
     },
     "include": [
-        "src/sass-lint-server.ts",
-        "typings.d.ts"
+        "src/sass-lint-server.ts"
     ]
 }
