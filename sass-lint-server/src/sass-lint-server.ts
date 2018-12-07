@@ -501,7 +501,7 @@ function makeDiagnostic(msg): Diagnostic {
 
     let message;
     if (msg.message) {
-        message = `${msg.message} (${msg.ruleId})`;
+        message = msg.message;
     } else {
         message = "Unknown error.";
     }
@@ -513,7 +513,8 @@ function makeDiagnostic(msg): Diagnostic {
             end:   {line, character: column + 1}
         },
         message,
-        source: "sass-lint"
+        source: "sass-lint",
+        code: msg.ruleId
     };
 }
 
