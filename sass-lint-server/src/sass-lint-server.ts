@@ -430,7 +430,7 @@ function locateFile(directory: string, fileName: string): string | null {
     } while (parent !== directory);
 
     return null;
-};
+}
 
 function getWorkspaceRelativePath(filePath: string): string {
     if (workspaceFolders) {

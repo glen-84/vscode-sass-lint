@@ -7,8 +7,7 @@ import {
     RequestType,
     ServerOptions,
     TextDocumentIdentifier,
-    TransportKind,
-    WorkspaceMiddleware
+    TransportKind
 } from "vscode-languageclient";
 import * as path from "path";
 
@@ -111,7 +110,7 @@ export function activate(context: ExtensionContext) {
 
                     return result;
                 }
-            } as WorkspaceMiddleware
+            }
         }
     };
 
