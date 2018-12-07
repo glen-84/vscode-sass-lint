@@ -233,8 +233,7 @@ async function loadLibrary(docUri: string) {
             promise = Files.resolve("sass-lint", getGlobalPath(), directory, trace);
         }
     } else {
-        // tslint:disable-next-line:no-non-null-assertion -- "cwd" argument can be undefined.
-        promise = Files.resolve("sass-lint", getGlobalPath(), undefined!, trace);
+        promise = Files.resolve("sass-lint", getGlobalPath(), undefined, trace);
     }
 
     document2Library.set(docUri, promise.then(
