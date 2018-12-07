@@ -7,7 +7,7 @@ import {
     TextDocumentIdentifier,
     TransportKind
 } from "vscode-languageclient";
-import * as path from "path";
+import path from "path";
 
 interface NoSassLintLibraryParams {
     readonly source: TextDocumentIdentifier;

@@ -5,12 +5,15 @@
             "es6"
         ],
         "module": "commonjs",
+        "esModuleInterop": true,
         "sourceMap": true,
         "outDir": "out",
         "newLine": "LF",
+        "strict": true,
+        "noImplicitAny": false,
+        "noImplicitReturns": true,
         "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "strictNullChecks": true
+        "noUnusedParameters": true
     },
     "include": [
         "src/extension.ts"

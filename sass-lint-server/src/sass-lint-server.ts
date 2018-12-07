@@ -13,10 +13,10 @@ import {
     TextDocuments,
     WorkspaceFolder
 } from "vscode-languageserver";
-import * as fs from "fs";
-import * as globule from "globule";
-import * as path from "path";
-import * as sassLint from "sass-lint";
+import fs from "fs";
+import globule from "globule";
+import path from "path";
+import sassLint from "sass-lint";
 import Uri from "vscode-uri";
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
