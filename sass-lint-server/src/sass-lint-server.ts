@@ -1,12 +1,5 @@
 import {
-    ConfigurationClientCapabilities,
-    ConfigurationRequest
-} from "vscode-languageserver-protocol/lib/protocol.configuration.proposed";
-import {
-    WorkspaceFoldersClientCapabilities,
-    WorkspaceFoldersInitializeParams
-} from "vscode-languageserver-protocol/lib/protocol.workspaceFolders.proposed";
-import {
+    ConfigurationRequest,
     createConnection,
     Diagnostic,
     DiagnosticSeverity,
@@ -113,7 +106,7 @@ function trace(message: string, verbose?: string): void {
     connection.tracer.log(message, verbose);
 }
 
-connection.onInitialize((params: InitializeParams & WorkspaceFoldersInitializeParams) => {
+connection.onInitialize((params: InitializeParams) => {
     trace("onInitialize");
 
     if (params.workspaceFolders) {
@@ -125,13 +118,8 @@ connection.onInitialize((params: InitializeParams & WorkspaceFoldersInitializePa
 
     const capabilities = params.capabilities;
 
-    hasWorkspaceFolderCapability =
-        (capabilities as WorkspaceFoldersClientCapabilities).workspace &&
-        !!(capabilities as WorkspaceFoldersClientCapabilities).workspace.workspaceFolders;
-
-    hasConfigurationCapability =
-        (capabilities as ConfigurationClientCapabilities).workspace &&
-        !!(capabilities as ConfigurationClientCapabilities).workspace.configuration;
+    hasWorkspaceFolderCapability = Boolean(capabilities.workspace && capabilities.workspace.workspaceFolders);
+    hasConfigurationCapability   = Boolean(capabilities.workspace && capabilities.workspace.configuration);
 
     return {
         capabilities: {
