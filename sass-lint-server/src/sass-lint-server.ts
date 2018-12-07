@@ -211,6 +211,14 @@ documents.onDidClose((event) => {
     delete configPathCache[Uri.parse(event.document.uri).fsPath];
 });
 
+async function nodePathExists(file: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, _reject) => {
+        fs.exists(file, (value) => {
+            resolve(value);
+        });
+    });
+}
+
 async function loadLibrary(docUri: string) {
     trace(`loadLibrary for: ${docUri}`);
 
@@ -224,8 +232,22 @@ async function loadLibrary(docUri: string) {
         const file = uri.fsPath;
         const directory = path.dirname(file);
 
+        let nodePath: string | undefined;
         if (settings && settings.nodePath) {
-            promise = Files.resolve("sass-lint", settings.nodePath, settings.nodePath, trace).then<string, string>(
+            const exists = await nodePathExists(settings.nodePath);
+
+            if (exists) {
+                nodePath = settings.nodePath;
+            } else {
+                connection.window.showErrorMessage(
+                    `The setting 'sasslint.nodePath' refers to '${settings.nodePath}', but this path does not exist. ` +
+                    `The setting will be ignored.`
+                );
+            }
+        }
+
+        if (nodePath) {
+            promise = Files.resolve("sass-lint", nodePath, nodePath, trace).then<string, string>(
                 undefined,
                 () => Files.resolve("sass-lint", getGlobalPath(), directory, trace)
             );
