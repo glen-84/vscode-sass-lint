@@ -13,6 +13,14 @@ rules.
 
 The extension requires that sass-lint is installed either locally or globally.
 
+To prevent the builtin "SCSS Language Basics" extension from formatting your code regardless of your sass-lint rules, disable formatting on save in your workspace or user settings:
+
+```json
+"[scss]": {
+  "editor.formatOnSave": false
+}
+```
+
 # Configuration options
 
 * `sasslint.enable` - Enable or disable linting.
