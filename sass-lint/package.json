@@ -15,7 +15,7 @@
     "url": "https://github.com/glen-84/vscode-sass-lint/issues"
   },
   "engines": {
-    "vscode": "^1.28.0"
+    "vscode": "^1.31.0"
   },
   "categories": [
     "Linters"
@@ -105,11 +105,11 @@
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
-    "@types/node": "^10.12.12",
-    "typescript": "^3.2.2",
-    "vscode": "^1.1.26"
+    "@types/node": "^11.12.2",
+    "typescript": "^3.4.1",
+    "vscode": "^1.1.33"
   },
   "dependencies": {
-    "vscode-languageclient": "^5.1.1"
+    "vscode-languageclient": "^5.2.1"
   }
 }
