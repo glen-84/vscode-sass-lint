@@ -41,7 +41,7 @@
         },
         "sasslint.configFile": {
           "type": "string",
-          "description": "A .sass-lint.yml file to use/fallback to if no config file is found in the current project",
+          "description": "A .sass-lint.yml or .sasslintrc file to use/fallback to if no config file is found in the current project",
           "default": "",
           "scope": "resource"
         },

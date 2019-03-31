@@ -62,7 +62,7 @@ export function activate(context: ExtensionContext) {
         synchronize: {
             // Synchronize the setting section "sasslint" to the server.
             configurationSection: "sasslint",
-            fileEvents: workspace.createFileSystemWatcher("**/.sass-lint.yml")
+            fileEvents: workspace.createFileSystemWatcher("**/.{sass-lint.yml,sasslintrc}")
         },
         diagnosticCollectionName: "sass-lint",
         initializationFailedHandler: (error) => {

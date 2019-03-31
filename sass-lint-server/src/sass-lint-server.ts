@@ -92,7 +92,6 @@ const globalPackageManagerPath: Map<string, string> = new Map();
 const path2Library: Map<string, typeof sassLint> = new Map();
 const document2Library: Map<string, Thenable<typeof sassLint>> = new Map();
 let configPathCache: {[key: string]: string | null} = {};
-const CONFIG_FILE_NAME = ".sass-lint.yml";
 
 interface NoSassLintLibraryParams {
     source: TextDocumentIdentifier;
@@ -403,13 +402,17 @@ async function getConfigFile(docUri: string): Promise<string | null> {
 
         const dirName = path.dirname(filePath);
 
-        configFile = locateFile(dirName, CONFIG_FILE_NAME);
+        const configFileNames = [".sass-lint.yml", ".sasslintrc"];
 
-        if (configFile) {
-            // Cache.
-            configPathCache[filePath] = configFile;
+        for (const configFileName of configFileNames) {
+            configFile = locateFile(dirName, configFileName);
 
-            return configFile;
+            if (configFile) {
+                // Cache.
+                configPathCache[filePath] = configFile;
+
+                return configFile;
+            }
         }
     }
 
