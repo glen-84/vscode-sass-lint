@@ -1,5 +1,6 @@
 .gitignore
 .vscode/**
 **/*.map
+**/tsconfig.tsbuildinfo
 src/**
 tsconfig.json

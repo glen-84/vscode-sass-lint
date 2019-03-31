@@ -6,6 +6,7 @@
         ],
         "module": "commonjs",
         "esModuleInterop": true,
+        "incremental": true,
         "sourceMap": true,
         "outDir": "../sass-lint/server",
         "newLine": "LF",
