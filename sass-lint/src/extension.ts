@@ -135,7 +135,7 @@ export function activate(context: ExtensionContext) {
     const client = new LanguageClient("sasslint", "Sass Lint", serverOptions, clientOptions);
     client.registerProposedFeatures();
 
-    client.onReady().then(() => {
+    void client.onReady().then(() => {
         client.onRequest(NoSassLintLibraryRequest.type, (params) => {
             const uri: Uri = Uri.parse(params.source.uri);
 

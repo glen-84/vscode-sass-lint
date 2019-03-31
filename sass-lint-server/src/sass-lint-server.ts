@@ -17,7 +17,7 @@ import fs from "fs";
 import globule from "globule";
 import path from "path";
 import sassLint from "sass-lint";
-import Uri from "vscode-uri";
+import URI from "vscode-uri";
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 const connection = createConnection(ProposedFeatures.all);
@@ -64,6 +64,7 @@ class SettingsCache {
                 trace(`SettingsCache: cache updating for: ${this.uri}`);
 
                 const configRequestParam = {items: [{scopeUri: uri, section: "sasslint"}]};
+                // tslint:disable-next-line:await-promise
                 const settings = await connection.sendRequest(ConfigurationRequest.type, configRequestParam);
 
                 resolve(settings[0]);
@@ -173,7 +174,7 @@ function sortWorkspaceFolders() {
 documents.onDidOpen(async (event) => {
     trace(`onDidOpen: ${event.document.uri}`);
 
-    validateTextDocument(event.document);
+    await validateTextDocument(event.document);
 });
 
 // The content of a text document has changed.
@@ -184,7 +185,7 @@ documents.onDidChangeContent(async (event) => {
     const settings = await settingsCache.get(event.document.uri);
 
     if (settings && settings.run === "onType") {
-        validateTextDocument(event.document);
+        await validateTextDocument(event.document);
     } else if (settings && settings.run === "onSave") {
         // Clear the diagnostics when validating on save and when the document is modified.
         connection.sendDiagnostics({uri: event.document.uri, diagnostics: []});
@@ -197,7 +198,7 @@ documents.onDidSave(async (event) => {
     const settings = await settingsCache.get(event.document.uri);
 
     if (settings && settings.run === "onSave") {
-        validateTextDocument(event.document);
+        await validateTextDocument(event.document);
     }
 });
 
@@ -208,21 +209,14 @@ documents.onDidClose((event) => {
     connection.sendDiagnostics({uri: event.document.uri, diagnostics: []});
     document2Library.delete(event.document.uri);
 
-    delete configPathCache[Uri.parse(event.document.uri).fsPath];
+    // tslint:disable-next-line:no-dynamic-delete -- TODO: Refactor to use a map.
+    delete configPathCache[URI.parse(event.document.uri).fsPath];
 });
-
-async function nodePathExists(file: string): Promise<boolean> {
-    return new Promise<boolean>((resolve, _reject) => {
-        fs.exists(file, (value) => {
-            resolve(value);
-        });
-    });
-}
 
 async function loadLibrary(docUri: string) {
     trace(`loadLibrary for: ${docUri}`);
 
-    const uri = Uri.parse(docUri);
+    const uri = URI.parse(docUri);
     let promise: Thenable<string>;
     const settings = await settingsCache.get(docUri);
 
@@ -234,14 +228,15 @@ async function loadLibrary(docUri: string) {
 
         let nodePath: string | undefined;
         if (settings && settings.nodePath) {
-            const exists = await nodePathExists(settings.nodePath);
+            // TODO: https://github.com/Microsoft/vscode-languageserver-node/issues/475
+            const exists = fs.existsSync(settings.nodePath);
 
             if (exists) {
                 nodePath = settings.nodePath;
             } else {
                 connection.window.showErrorMessage(
                     `The setting 'sasslint.nodePath' refers to '${settings.nodePath}', but this path does not exist. ` +
-                    `The setting will be ignored.`
+                    "The setting will be ignored."
                 );
             }
         }
@@ -259,20 +254,18 @@ async function loadLibrary(docUri: string) {
     }
 
     document2Library.set(docUri, promise.then(
-        (path) => {
+        (libraryPath) => {
             let library;
-            if (!path2Library.has(path)) {
-                library = require(path);
-                trace(`sass-lint library loaded from: ${path}`);
-                path2Library.set(path, library);
+            if (!path2Library.has(libraryPath)) {
+                library = require(libraryPath);
+                trace(`sass-lint library loaded from: ${libraryPath}`);
+                path2Library.set(libraryPath, library);
             }
 
-            return path2Library.get(path);
+            return path2Library.get(libraryPath);
         },
         () => {
             connection.sendRequest(NoSassLintLibraryRequest.type, {source: {uri: docUri}});
-
-            return undefined;
         }
     ));
 }
@@ -283,7 +276,7 @@ async function validateTextDocument(document: TextDocument): Promise<void> {
     trace(`validateTextDocument: ${docUri}`);
 
     // Sass Lint can only lint files on disk.
-    if (Uri.parse(docUri).scheme !== "file") {
+    if (URI.parse(docUri).scheme !== "file") {
         return;
     }
 
@@ -301,6 +294,7 @@ async function validateTextDocument(document: TextDocument): Promise<void> {
         return;
     }
 
+    // tslint:disable-next-line:await-promise
     const library = await document2Library.get(document.uri);
 
     if (library) {
@@ -314,12 +308,12 @@ async function validateTextDocument(document: TextDocument): Promise<void> {
     }
 }
 
-function validateAllTextDocuments(textDocuments: TextDocument[]): void {
+async function validateAllTextDocuments(textDocuments: TextDocument[]): Promise<void> {
     const tracker = new ErrorMessageTracker();
 
     for (const document of textDocuments) {
         try {
-            validateTextDocument(document);
+            await validateTextDocument(document);
         } catch (err) {
             tracker.add(getErrorMessage(err, document));
         }
@@ -334,9 +328,9 @@ async function doValidate(library: typeof sassLint, document: TextDocument): Pro
     const diagnostics: Diagnostic[] = [];
 
     const docUri = document.uri;
-    const uri = Uri.parse(docUri);
+    const uri = URI.parse(docUri);
 
-    if (Uri.parse(docUri).scheme !== "file") {
+    if (URI.parse(docUri).scheme !== "file") {
         // Sass Lint can only lint files on disk.
         trace("No linting: file is not saved on disk");
 
@@ -396,7 +390,7 @@ async function doValidate(library: typeof sassLint, document: TextDocument): Pro
 }
 
 async function getConfigFile(docUri: string): Promise<string | null> {
-    const filePath = Uri.parse(docUri).fsPath;
+    const filePath = URI.parse(docUri).fsPath;
 
     let configFile = configPathCache[filePath];
 
@@ -456,7 +450,7 @@ function locateFile(directory: string, fileName: string): string | null {
 function getWorkspaceRelativePath(filePath: string): string {
     if (workspaceFolders) {
         for (const workspaceFolder of workspaceFolders) {
-            let folderPath = Uri.parse(workspaceFolder.uri).fsPath;
+            let folderPath = URI.parse(workspaceFolder.uri).fsPath;
 
             if (!folderPath.endsWith("/")) {
                 folderPath += path.sep;
@@ -485,21 +479,21 @@ function makeDiagnostic(msg): Diagnostic {
             break;
     }
 
-    let line;
+    let line: number;
     if (msg.line) {
         line = msg.line - 1;
     } else {
         line = 0;
     }
 
-    let column;
+    let column: number;
     if (msg.column) {
         column = msg.column - 1;
     } else {
         column = 0;
     }
 
-    let message;
+    let message: string;
     if (msg.message) {
         message = msg.message;
     } else {
@@ -525,7 +519,7 @@ function getErrorMessage(err, document: TextDocument): string {
         errorMessage = (err.message as string);
     }
 
-    const fsPath = Files.uriToFilePath(document.uri);
+    const fsPath = URI.parse(document.uri).fsPath;
     const message = `vscode-sass-lint: '${errorMessage}' while validating: ${fsPath} stacktrace: ${err.stack}`;
 
     return message;
@@ -535,15 +529,15 @@ function getGlobalPackageManagerPath(packageManager: string): string | undefined
     trace(`Begin - resolve global package manager path for: ${packageManager}`);
 
     if (!globalPackageManagerPath.has(packageManager)) {
-        let path: string | undefined;
+        let packageManagerPath: string | undefined;
         if (packageManager === "npm") {
-            path = Files.resolveGlobalNodePath(trace);
+            packageManagerPath = Files.resolveGlobalNodePath(trace);
         } else if (packageManager === "yarn") {
-            path = Files.resolveGlobalYarnPath(trace);
+            packageManagerPath = Files.resolveGlobalYarnPath(trace);
         }
 
         // tslint:disable-next-line:no-non-null-assertion
-        globalPackageManagerPath.set(packageManager, path!);
+        globalPackageManagerPath.set(packageManager, packageManagerPath!);
     }
 
     trace(`Done - resolve global package manager path for: ${packageManager}`);
@@ -552,7 +546,7 @@ function getGlobalPackageManagerPath(packageManager: string): string | undefined
 }
 
 // The settings have changed. Sent on server activation as well.
-connection.onDidChangeConfiguration((params) => {
+connection.onDidChangeConfiguration(async (params) => {
     globalSettings = params.settings;
 
     // Clear cache.
@@ -561,14 +555,14 @@ connection.onDidChangeConfiguration((params) => {
     settingsCache.flush();
 
     // Revalidate any open text documents.
-    validateAllTextDocuments(documents.all());
+    await validateAllTextDocuments(documents.all());
 });
 
-connection.onDidChangeWatchedFiles(() => {
+connection.onDidChangeWatchedFiles(async () => {
     // Clear cache.
     configPathCache = {};
 
-    validateAllTextDocuments(documents.all());
+    await validateAllTextDocuments(documents.all());
 });
 
 // Listen on the connection.
