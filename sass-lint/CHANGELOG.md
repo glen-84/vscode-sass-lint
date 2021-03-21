@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2021-03-21
+
+### Changed
+
+* This extension is no longer maintained, as the sass-lint library project has been abandoned.
+
+    ⚠ Please uninstall the extension as soon as possible, as it may be susceptible to security exploits (see [CVE-2021-28956](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2021-28956)).
+
+    You may wish to consider [stylelint](https://stylelint.io/) as an alternative.
+
 ## [1.0.6] - 2019-09-08
 
 ### Changed
@@ -116,6 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release.
 
+[1.0.7]: https://github.com/glen-84/vscode-sass-lint/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/glen-84/vscode-sass-lint/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/glen-84/vscode-sass-lint/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/glen-84/vscode-sass-lint/compare/v1.0.3...v1.0.4
