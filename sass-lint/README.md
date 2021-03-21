@@ -1,8 +1,16 @@
-# vscode-sass-lint
+# vscode-sass-lint (deprecated)
 
 ![Version](https://vsmarketplacebadge.apphb.com/version-short/glen-84.sass-lint.svg)
 ![Installs](https://vsmarketplacebadge.apphb.com/installs-short/glen-84.sass-lint.svg)
 ![Rating](https://vsmarketplacebadge.apphb.com/rating-short/glen-84.sass-lint.svg)
+
+**DEPRECATED:** This extension is no longer maintained, as the sass-lint library project has been abandoned.
+
+⚠ Please uninstall the extension as soon as possible, as it may be susceptible to security exploits (see [CVE-2021-28956](https://cve.mitre.org/cgi-bin/cvename.cgi?name=2021-28956)).
+
+You may wish to consider [stylelint](https://stylelint.io/) as an alternative.
+
+---
 
 Integrates the [sass-lint](https://github.com/sasstools/sass-lint) linter into VS Code.
 
